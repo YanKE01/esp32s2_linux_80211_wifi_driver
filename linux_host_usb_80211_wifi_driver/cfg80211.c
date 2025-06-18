@@ -1,4 +1,3 @@
-
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -171,7 +170,7 @@ static void inform_single_bss(struct xfz_cfg80211_adapter  * apt,wifi_ap_record_
 	int ie_len=0;
     struct cfg80211_inform_bss data = {
             .chan = &apt->wiphy->bands[NL80211_BAND_2GHZ]->channels[0], /* the only channel for this demo */
-            .scan_width = NL80211_BSS_CHAN_WIDTH_20,
+            // .scan_width = NL80211_BSS_CHAN_WIDTH_20,
             /* signal "type" not specified in this DEMO so its basically unused, it can be some kind of percentage from 0 to 100 or mBm value*/
             /* signal "type" may be specified before wiphy registration by setting wiphy->signal_type */
             .signal = ap->rssi*100,
@@ -223,9 +222,15 @@ int xfz_scan_done_evt(struct xfz_cfg80211_adapter * apt ,uint8_t * resp,bool abo
 		int sta_number=pcmd->len/sizeof(wifi_ap_record_t);
 		wifi_ap_record_t *ap_list_buffer=(wifi_ap_record_t *)pcmd->buf;
 
-		for(i=0; i<sta_number; i++) {
-		   inform_single_bss(apt,&ap_list_buffer[i]);
-		}
+        for(i=0; i<sta_number; i++) {
+            printk(KERN_INFO "scan: AP[%d] SSID:%s BSSID:" MACSTR " RSSI:%d\n",
+                i,
+                ap_list_buffer[i].ssid,
+                MAC2STR(ap_list_buffer[i].bssid),
+                ap_list_buffer[i].rssi
+            );
+            inform_single_bss(apt,&ap_list_buffer[i]);
+        }
 
 	}
 out:
@@ -239,7 +244,7 @@ out:
 	   apt->scan_request = NULL;
 	}
 	up(&apt->sem);
-
+    return 0;
 }
 
 /* "Scan" routine for DEMO. It just inform the kernel about "dummy" BSS and "finishs" scan.
@@ -445,7 +450,7 @@ int xfz_connect_done_evt(struct xfz_cfg80211_adapter * apt,uint8_t * resp){
 	
     if(down_interruptible(&apt->sem)) {
 		LOGE("in %s can't down sem\n",__FUNCTION__);
-        return;
+        return 0;
     }
 
 	/* finish connect */
@@ -458,7 +463,7 @@ int xfz_connect_done_evt(struct xfz_cfg80211_adapter * apt,uint8_t * resp){
 	  
 
 	up(&apt->sem);
-
+    return 0;
 }
 
 
@@ -492,31 +497,23 @@ xfz_cfg80211_dump_station(struct wiphy *wiphy, struct net_device *ndev,
 
 
 
-static s32
-xfz_cfg80211_add_key(struct wiphy *wiphy, struct net_device *ndev,
-		       u8 key_idx, bool pairwise, const u8 *mac_addr,
-		       struct key_params *params)
+int xfz_cfg80211_add_key(struct wiphy *wiphy, struct net_device *ndev,
+               int key_idx, u8 key_type, bool pairwise, const u8 *mac_addr,
+               struct key_params *params)
 {
-
-	return 0;
+    return 0;
 }
 
-
-static s32
-xfz_cfg80211_del_key(struct wiphy *wiphy, struct net_device *ndev,
-		       u8 key_idx, bool pairwise, const u8 *mac_addr)
+int xfz_cfg80211_del_key(struct wiphy *wiphy, struct net_device *ndev,
+               int key_idx, u8 key_type, bool pairwise, const u8 *mac_addr)
 {
-
-	return 0;
+    return 0;
 }
 
-
-static s32
-xfz_cfg80211_config_default_key(struct wiphy *wiphy, struct net_device *ndev,
-				  u8 key_idx, bool unicast, bool multicast)
+int xfz_cfg80211_config_default_key(struct wiphy *wiphy, struct net_device *ndev,
+                  int key_idx, u8 key_type, bool unicast, bool multicast)
 {
-
-	return 0;
+    return 0;
 }
 
 static s32
